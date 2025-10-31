@@ -1,3 +1,4 @@
+# models/notes.py
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List, Optional
@@ -20,4 +21,5 @@ class NoteOut(BaseModel):
     note_title: str
     note_description: str
     note_created: datetime
+    owner_key: str                  # email key for ownership
     note_history: List[NoteSnapshot] = []
