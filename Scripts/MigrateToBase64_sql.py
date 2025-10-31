@@ -1,12 +1,10 @@
-# scripts/migrate_to_base64_sql.py
-import os
 from sqlalchemy.orm import Session
-from databases.sql_connect import SessionLocal, engine
-from models.sql_models import Note, NoteHistory
+from databases.sql_connect import SessionLocal
+from models.sql_models import Note
 from utils_b64 import b64e, is_b64
 
 def migrate():
-    with SessionLocal() as db:
+    with SessionLocal() as db:  # type: Session
         notes = db.query(Note).all()
         changed = 0
         for n in notes:

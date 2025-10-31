@@ -1,4 +1,3 @@
-
 from typing import Optional
 from sqlalchemy.orm import Session
 from models.sql_models import User
