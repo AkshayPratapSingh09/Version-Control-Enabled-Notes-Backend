@@ -1,11 +1,21 @@
-from fastapi import FastAPI
+# app.py
+from fastapi import FastAPI, HTTPException
+from typing import List
 
-app = FastAPI() 
+from databases.mongodb_connect import get_db
+from models.notes import NoteCreate, NoteOut
+from repositories.notes_repository import add_note, get_all_notes
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+app = FastAPI(title="Notes API", version="0.1.0")
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: str = None):
-    return {"item_id": item_id, "q": q}
+db = get_db()
+
+@app.post("/notes", response_model=NoteOut)
+def create_note(payload: NoteCreate):
+    created = add_note(db, payload.note_title, payload.note_description)
+    return NoteOut(**created)
+
+@app.get("/notes", response_model=List[NoteOut])
+def list_notes():
+    records = get_all_notes(db)
+    return [NoteOut(**r) for r in records]
