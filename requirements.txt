@@ -1,5 +1,10 @@
+# requirements.txt
 fastapi
 uvicorn
-pymongo 
 pydantic
+pydantic[email]
+pymongo
 sqlalchemy
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart
