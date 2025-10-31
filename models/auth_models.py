@@ -1,4 +1,3 @@
-# models/auth_models.py
 from pydantic import BaseModel, EmailStr, Field
 
 class RegisterIn(BaseModel):
@@ -10,6 +9,6 @@ class LoginIn(BaseModel):
     password: str
 
 class UserOut(BaseModel):
-    id: int | None = None         # SQL id (int) or None for Mongo
-    user_id: int | None = None    # Mongo incremental user id (if you want one)
+    id: int | None = None         
+    user_id: int | None = None   
     email: EmailStr

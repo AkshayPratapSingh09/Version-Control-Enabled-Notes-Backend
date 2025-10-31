@@ -1,4 +1,3 @@
-
 from typing import Optional
 from databases.mongodb_connect import get_db
 

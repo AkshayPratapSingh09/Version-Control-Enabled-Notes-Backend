@@ -39,22 +39,32 @@ It’s designed for developers and teams who want to manage note revisions with 
 
 ```
 fastapi-notes/
-│
-├── app/
-│   ├── main.py                # FastAPI entry point
-│   ├── models.py              # Note & Version schemas
-│   ├── database.py            # MongoDB connection
-│   ├── crud.py                # CRUD and version logic
-│   ├── routes/
-│   │   └── notes.py           # Notes endpoints
-│   └── utils/
-│       └── versioning.py      # Version control helpers
-│
-├── requirements.txt
-├── README.md
-└── .env.example
-```
+├─ app.py
+├─ auth.py
+├─ utils.py
+├─ utils_b64.py
+├─ utils_media.py
+├─ requirements.txt
+├─ README.md
+├─ models/
+│  ├─ auth_models.py
+│  ├─ notes.py
+│  └─ sql_models.py
+├─ databases/
+│  ├─ mongodb_connect.py
+│  └─ sql_connect.py
+├─ repositories/
+│  ├─ notes_repository.py          
+get_all_notes
+│  ├─ sql_notes_repository.py      
+get_all_notes
+│  ├─ users_repository.py          
+│  └─ sql_users_repository.py      
+└─ scripts/
+   ├─ migrate_to_base64_mongo.py
+   └─ migrate_to_base64_sql.py
 
+```
 ---
 
 ## ⚙️ Setup Instructions
@@ -94,17 +104,25 @@ Access the docs:
 - ReDoc → [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
 ---
+## 🖼️ Media Uploads (Optional, 5 MB/file)
 
-## 🧪 Example Endpoints
+- Supported types: **images** (jpeg, png, gif, webp) and **videos** (mp4, webm, mov).
+- **Strict limit:** 5 MB per file. Larger files are skipped with a warning; the request still succeeds.
+- Files are stored under `UPLOAD_DIR` (default: `./uploads`) and served at `/uploads/...`.
 
-| Method | Endpoint | Description |
-|:-------|:----------|:-------------|
-| `POST` | `/notes/` | Create a new note |
-| `GET` | `/notes/` | Get all notes |
-| `GET` | `/notes/{id}` | Get a note by ID |
-| `PUT` | `/notes/{id}` | Update and create a new version |
-| `DELETE` | `/notes/{id}` | Delete a note |
-| `GET` | `/notes/{id}/versions` | Get all versions of a note |
+---
+
+### Endpoints
+- `POST /media/upload` (Bearer token required)  
+  Multipart field: `files` (one or many). Returns `{ saved: [...], errors: [...] }`.
+- `POST /notes`  
+  JSON body supports optional `media: [{ url, mime_type, size_bytes, original_name }]`.  
+  Use after uploading files to `/media/upload`.
+- `POST /notes/with-media`  
+  Multipart form: `note_title`, `note_description`, `files[]`. Uploads and attaches in one step.
+
+> Media is **not Base64 encoded**. Only note `title`/`description` are stored as Base64.  
+> Existing notes remain valid; `media` defaults to an empty list.
 
 ---
 

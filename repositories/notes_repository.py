@@ -1,4 +1,3 @@
-
 from datetime import timezone, datetime
 from typing import Dict, Any, List
 from pymongo.collection import Collection
@@ -19,19 +18,20 @@ def _decode_note(doc: Dict[str, Any]) -> Dict[str, Any]:
     doc = dict(doc)
     doc["note_title"] = b64d(doc.get("note_title"))
     doc["note_description"] = b64d(doc.get("note_description"))
-
-    hist = []
-    for h in doc.get("note_history", []):
-        hist.append({
-            "note_title": b64d(h.get("note_title", "")),
-            "note_description": b64d(h.get("note_description", "")),
+    doc["note_history"] = [
+        {
+            "note_title": b64d(h.get("note_title","")),
+            "note_description": b64d(h.get("note_description","")),
             "archived_at": h.get("archived_at")
-        })
-    doc["note_history"] = hist
+        }
+        for h in doc.get("note_history", [])
+    ]
+    doc["media"] = doc.get("media", [])
     return doc
 
+# === public: only two functions ===
 
-def add_note(owner_email: str, note_title: str, note_description: str) -> Dict[str, Any]:
+def add_note(owner_email: str, note_title: str, note_description: str, media: List[Dict[str, Any]] | None = None) -> Dict[str, Any]:
     doc = {
         "uniqueID": _next_unique_id(),
         "note_title": b64e(note_title),
@@ -39,7 +39,8 @@ def add_note(owner_email: str, note_title: str, note_description: str) -> Dict[s
         "note_created": datetime.now(timezone.utc),
         "owner_key": owner_email,
         "note_history": [],
-        }
+        "media": media or [],
+    }
     _col().insert_one(doc)
     return _decode_note(_serialize(doc))
 

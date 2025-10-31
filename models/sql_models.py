@@ -1,4 +1,3 @@
-
 from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, Mapped, mapped_column
@@ -14,8 +13,8 @@ class User(Base):
 class Note(Base):
     __tablename__ = "notes"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)  # uniqueID
-    note_title: Mapped[str] = mapped_column(String(512), nullable=False)
-    note_description: Mapped[str] = mapped_column(String, nullable=False)
+    note_title: Mapped[str] = mapped_column(String(512), nullable=False)            # stored Base64
+    note_description: Mapped[str] = mapped_column(String, nullable=False)           # stored Base64
     note_created: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
@@ -25,6 +24,15 @@ class NoteHistory(Base):
     __tablename__ = "note_history"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     note_id: Mapped[int] = mapped_column(ForeignKey("notes.id", ondelete="CASCADE"), nullable=False)
-    note_title: Mapped[str] = mapped_column(String(512), nullable=False)
-    note_description: Mapped[str] = mapped_column(String, nullable=False)
+    note_title: Mapped[str] = mapped_column(String(512), nullable=False)            # Base64 snapshot
+    note_description: Mapped[str] = mapped_column(String, nullable=False)           # Base64 snapshot
     archived_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
+class NoteMedia(Base):
+    __tablename__ = "note_media"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    note_id: Mapped[int] = mapped_column(ForeignKey("notes.id", ondelete="CASCADE"), nullable=False)
+    url: Mapped[str] = mapped_column(String, nullable=False)
+    mime_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    original_name: Mapped[str] = mapped_column(String, nullable=False)
