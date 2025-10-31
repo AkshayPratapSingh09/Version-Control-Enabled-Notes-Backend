@@ -108,6 +108,34 @@ Access the docs:
 
 ---
 
+## 🔐 Base64 Storage & Migration
+
+This API **stores notes in Base64** (UTF-8 → Base64 in DB) and **decodes on responses**.  
+Why? Safer transport, no encoding surprises, and consistent cross-DB behavior.
+
+### What’s encoded
+- `note_title`
+- `note_description`
+- (Mongo only) `note_history[*].note_title`, `note_history[*].note_description`
+
+### New installs (fresh DB)
+No action needed. The repositories encode on write and decode on read automatically.
+
+### Migrate an existing database
+
+> **Backup first!** Always snapshot your DB before migrations.
+
+#### MongoDB
+```bash
+export MONGO_URI="mongodb://localhost:27017"
+export DB_NAME="notes_db"
+python scripts/migrate_to_base64_mongo.py
+
+
+---
+
+
+
 ## 🧬 Version Control Logic
 
 Each note update automatically creates a new version entry:
