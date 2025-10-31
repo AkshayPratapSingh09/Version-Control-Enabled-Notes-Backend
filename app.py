@@ -1,33 +1,42 @@
-from fastapi import FastAPI, HTTPException
+import os
+from fastapi import FastAPI, Depends, HTTPException
 from typing import List
+from models.notes import NoteCreate, NoteOut
 
-from databases.mongodb_connect import get_db
-from models.notes import NoteCreate, NoteUpdate, NoteOut
-from repositories.notes_repository import add_note, get_all_notes, update_note, delete_note
+DB_BACKEND = os.getenv("DB_BACKEND", "mongo").lower()
+app = FastAPI(title=f"FastAPI Notes ({DB_BACKEND.upper()})", version="0.3.0")
 
-app = FastAPI(title="Notes API", version="0.2.0")
-db = get_db()
+if DB_BACKEND == "sql":
+    # SQL wiring
+    from databases.sql_connect import SessionLocal, engine, Base
+    from repositories.sql_notes_repository import add_note as sql_add, get_all_notes as sql_all
 
-@app.post("/notes", response_model=NoteOut)
-def create_note(payload: NoteCreate):
-    created = add_note(db, payload.note_title, payload.note_description)
-    return NoteOut(**created)
+    Base.metadata.create_all(bind=engine)
+    def get_sql_db():
+        db = SessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
 
-@app.get("/notes", response_model=List[NoteOut])
-def list_notes():
-    records = get_all_notes(db)
-    return [NoteOut(**r) for r in records]
+    @app.post("/notes", response_model=NoteOut)
+    def create_note(payload: NoteCreate, db=Depends(get_sql_db)):
+        return NoteOut(**sql_add(db, payload.note_title, payload.note_description))
 
-@app.put("/notes/{unique_id}", response_model=NoteOut)
-def edit_note(unique_id: int, payload: NoteUpdate):
-    updated = update_note(db, unique_id, payload.note_title, payload.note_description)
-    if not updated:
-        raise HTTPException(status_code=404, detail="Note not found")
-    return NoteOut(**updated)
+    @app.get("/notes", response_model=List[NoteOut])
+    def list_notes(db=Depends(get_sql_db)):
+        return [NoteOut(**r) for r in sql_all(db)]
 
-@app.delete("/notes/{unique_id}", status_code=204)
-def remove_note(unique_id: int):
-    ok = delete_note(db, unique_id)
-    if not ok:
-        raise HTTPException(status_code=404, detail="Note not found")
-    return None
+else:
+    # Mongo wiring (existing)
+    from databases.mongodb_connect import get_db
+    from repositories.notes_repository import add_note as mg_add, get_all_notes as mg_all
+    db = get_db()
+
+    @app.post("/notes", response_model=NoteOut)
+    def create_note(payload: NoteCreate):
+        return NoteOut(**mg_add(db, payload.note_title, payload.note_description))
+
+    @app.get("/notes", response_model=List[NoteOut])
+    def list_notes():
+        return [NoteOut(**r) for r in mg_all(db)]
