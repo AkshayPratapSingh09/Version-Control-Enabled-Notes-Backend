@@ -35,7 +35,6 @@ if DB_BACKEND == "sql":
         finally:
             db.close()
 
-    # --- Auth ---
     @app.post("/auth/register", response_model=UserOut, status_code=201)
     def register(payload: RegisterIn, db=Depends(get_sql_db)):
         if sql_find_user(db, payload.email):
@@ -51,7 +50,6 @@ if DB_BACKEND == "sql":
         token = create_access_token({"sub": u.email}, JWT_SECRET, JWT_ALGO, ACCESS_TOKEN_EXPIRE_MINUTES)
         return Token(access_token=token)
 
-    # --- Media upload (fault tolerant) ---
     @app.post("/media/upload")
     async def upload_media(files: List[UploadFile] = File(...), current_email: str = Depends(get_current_email)):
         os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -65,7 +63,6 @@ if DB_BACKEND == "sql":
             results.append(meta)
         return {"saved": results, "errors": errors, "limit_bytes": MAX_BYTES, "allowed": sorted(list(ALLOWED_MIME))}
 
-    # --- Notes ---
     @app.post("/notes", response_model=NoteOut)
     def create_note(payload: NoteCreate, current_email: str = Depends(get_current_email), db=Depends(get_sql_db)):
         # ensure user exists
@@ -108,7 +105,6 @@ if DB_BACKEND == "sql":
         if not owner or n.owner_id != owner.id:
             raise HTTPException(status_code=403, detail="Not allowed")
 
-        # push snapshot (Base64 in DB)
         hist = NoteHistory(note_id=n.id, note_title=n.note_title, note_description=n.note_description)
         db.add(hist)
 
@@ -138,7 +134,6 @@ if DB_BACKEND == "sql":
         db.delete(n); db.commit()
         return None
 
-# ------------------ MONGO BRANCH ------------------
 else:
     from databases.mongodb_connect import get_db
     from repositories.users_repository import find_user_by_email as mg_find_user, create_user as mg_create_user
@@ -147,7 +142,6 @@ else:
 
     db = get_db()
 
-    # --- Auth ---
     @app.post("/auth/register", response_model=UserOut, status_code=201)
     def register(payload: RegisterIn):
         if mg_find_user(payload.email):
@@ -163,7 +157,6 @@ else:
         token = create_access_token({"sub": u["email"]}, JWT_SECRET, JWT_ALGO, ACCESS_TOKEN_EXPIRE_MINUTES)
         return Token(access_token=token)
 
-    # --- Media upload (fault tolerant) ---
     @app.post("/media/upload")
     async def upload_media(files: List[UploadFile] = File(...), current_email: str = Depends(get_current_email)):
         os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -177,7 +170,6 @@ else:
             results.append(meta)
         return {"saved": results, "errors": errors, "limit_bytes": MAX_BYTES, "allowed": sorted(list(ALLOWED_MIME))}
 
-    # --- Notes ---
     @app.post("/notes", response_model=NoteOut)
     def create_note(payload: NoteCreate, current_email: str = Depends(get_current_email)):
         if not mg_find_user(current_email):
@@ -231,7 +223,6 @@ else:
             return_document=ReturnDocument.AFTER
         )
         updated.pop("_id", None)
-        # decode before return
         updated["note_title"] = b64d(updated.get("note_title"))
         updated["note_description"] = b64d(updated.get("note_description"))
         decoded_hist = []
