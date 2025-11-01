@@ -96,12 +96,159 @@ DB_NAME=notes_db
 
 ### 5. Run the Server
 ```bash
-uvicorn app.main:app --reload
+uvicorn app:app --reload
 ```
 
-Access the docs:
-- Swagger UI → [http://localhost:8000/docs](http://localhost:8000/docs)
-- ReDoc → [http://localhost:8000/redoc](http://localhost:8000/redoc)
+The API will be available at `http://localhost:8000`
+
+---
+
+## 📖 API Documentation & Usage
+
+FastAPI automatically generates interactive API documentation. Access it here:
+- **Swagger UI** → [http://localhost:8000/docs](http://localhost:8000/docs) *(Recommended)*
+- **ReDoc** → [http://localhost:8000/redoc](http://localhost:8000/redoc)
+
+### 🎯 Using Swagger UI (Step-by-Step Guide)
+
+#### **First Time Setup**
+1. **Start the server** with `uvicorn app:app --reload`
+2. **Open Swagger UI** at [http://localhost:8000/docs](http://localhost:8000/docs)
+3. **Register a new account** using the `/auth/register` endpoint
+4. **Login** to get your access token
+5. **Authorize** your session using the 🔒 button in Swagger UI
+
+#### **Authentication Flow**
+
+**Step 1: Register a New User**
+- Click on `POST /auth/register`
+- Click "Try it out"
+- Use this example payload:
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword123"
+}
+```
+
+**Step 2: Login to Get Access Token**
+- Click on `POST /auth/login`
+- Click "Try it out"
+- Enter credentials:
+  - `username`: `user@example.com`
+  - `password`: `securepassword123`
+- Copy the `access_token` from the response
+
+**Step 3: Authorize Your Session**
+- Click the 🔒 **Authorize** button at the top of Swagger UI
+- Enter: `Bearer YOUR_ACCESS_TOKEN_HERE`
+- Click "Authorize"
+
+#### **Working with Notes**
+
+**Create a Simple Note**
+- Use `POST /notes` with this payload:
+```json
+{
+  "note_title": "My First Note",
+  "note_description": "This is a sample note created via Swagger UI"
+}
+```
+
+**Create a Note with Media**
+- Use `POST /notes/with-media` (multipart form)
+- Fill in:
+  - `note_title`: "Note with Image"
+  - `note_description`: "This note has an attached image"
+  - `files`: Upload an image file (max 5MB)
+
+**List All Your Notes**
+- Use `GET /notes` (no payload needed)
+
+**Update a Note**
+- Use `PUT /notes/{unique_id}` with:
+```json
+{
+  "note_title": "Updated Note Title",
+  "note_description": "Updated content here"
+}
+```
+
+**Upload Media Files**
+- Use `POST /media/upload`
+- Select multiple files (images/videos, max 5MB each)
+- Supported formats: JPEG, PNG, GIF, WebP, MP4, WebM, MOV
+
+#### **Understanding API Responses**
+
+**Successful Note Creation Response:**
+```json
+{
+  "uniqueID": 1,
+  "note_title": "My First Note",
+  "note_description": "This is a sample note",
+  "note_created": "2025-10-31T10:30:00Z",
+  "owner_key": "user@example.com",
+  "note_history": [],
+  "media": []
+}
+```
+
+**Media Upload Response:**
+```json
+{
+  "saved": [
+    {
+      "url": "/uploads/image_20251031_103000.jpg",
+      "mime_type": "image/jpeg",
+      "size_bytes": 245760,
+      "original_name": "photo.jpg"
+    }
+  ],
+  "errors": [],
+  "limit_bytes": 5242880,
+  "allowed": ["image/jpeg", "image/png", "video/mp4"]
+}
+```
+
+#### **Common Parameters Explained**
+
+| Parameter | Type | Description | Example |
+|-----------|------|-------------|---------|
+| `unique_id` | integer | Note identifier for updates/deletes | `1`, `42`, `123` |
+| `note_title` | string | Title of your note | `"Meeting Notes"` |
+| `note_description` | string | Main content of your note | `"Discussed project timeline"` |
+| `files` | file[] | Media files to upload | Select from file picker |
+| `Authorization` | header | Bearer token for authentication | `Bearer eyJ0eXAiOiJKV1Q...` |
+
+#### **Error Handling Examples**
+
+**401 Unauthorized** - Missing or invalid token:
+```json
+{
+  "detail": "Not authenticated"
+}
+```
+
+**404 Not Found** - Note doesn't exist:
+```json
+{
+  "detail": "Note not found"
+}
+```
+
+**413 File Too Large** - Media file exceeds 5MB:
+```json
+{
+  "saved": [],
+  "errors": [
+    {
+      "file": "large_video.mp4",
+      "error": "File too large (max 5MB)"
+    }
+  ]
+}
+```
 
 ---
 ## 🖼️ Media Uploads (Optional, 5 MB/file)

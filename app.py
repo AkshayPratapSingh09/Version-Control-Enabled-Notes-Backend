@@ -24,7 +24,7 @@ if DB_BACKEND == "sql":
     from databases.sql_connect import SessionLocal, engine, Base
     from models.sql_models import User, Note, NoteHistory, NoteMedia as SQLNoteMedia
     from repositories.sql_users_repository import find_user_by_email as sql_find_user, create_user as sql_create_user
-    from repositories.sql_notes_repository import add_note as sql_add, get_all_notes as sql_all
+    from repositories.sql_notes_repositories import add_note as sql_add, get_all_notes as sql_all
 
     Base.metadata.create_all(bind=engine)
 
